@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>   
+        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <style>
+		  /* Our css will go here */
+			  .line {
+			    fill: none;
+			    stroke: magenta;
+			  }
+
+			  .domain {
+			    fill: none;
+			    stroke: cyan;
+			}
+
+			.tick {
+			    font-size: 10px;
+			}
+
+
+			.tick line {
+			    stroke: cyan;
+			}
+
+
+		</style>
+    </head>
+    <body>
+    	<h1>Strikeouts on the Rise</h1>
+		<p>Meaningful intro sentence here.</p>
+		<div class="chart"></div>
+        <script type="text/javascript">
+
+			var margin = {top: 20, right: 20, bottom: 20, left: 20};
+			    width = 750 - margin.left - margin.right,
+			    height = 500 - margin.top - margin.bottom;
+
+			var svg = d3.select(".chart").append("svg")
+			    .attr("width", width + margin.left + margin.right)
+			    .attr("height", height + margin.top + margin.bottom)
+			  .append("g")
+			    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			d3.select(".chart").append("button").text("Blamo!").on("click", function() {
+			    d3.selectAll("circle")
+			        .transition()
+			        .duration(2000)
+			        .ease("bounce")
+			        .delay(function(d, i){ return i * 50})
+			        .attr("cy", height)
+			        .attr("r", 7);
+			});
+
+
+			var xScale = d3.scale.linear()
+			      .domain([1900, 2012])
+			      .range([0, width]);		 
+
+			var xAxis = d3.svg.axis()
+			    .tickFormat(function(d) { return d; })
+			    .scale(xScale);
+
+			//var yScale = d3.scale.linear()
+			//      .domain([0, 100])
+			//      .range([0, height]);
+
+			d3.csv("strikeouts.csv", function(data){
+			    data.forEach(function(d) {
+			        d.so = +d.so;
+			        d.year = +d.year;
+			        d.g = +d.g;
+			        //We also want to calculate the strikeouts per game and store it as a new column
+			        d.kpg = d.so / d.g;
+			    });
+
+			    var yScale = d3.scale.linear()
+			      //.domain([0, 10])
+			      .domain([0, d3.max(data, function(d) { return d.kpg; })])
+			      .range([height, 0]);				    
+
+				svg.selectAll(".dot")
+				      .data(data)
+				  .enter().append("circle")
+				      .attr("class", "dot")
+				      .attr("r", 2)
+				      .attr("cx", function(d, i) { return xScale(d.year); })
+				      .attr("cy", function(d) { return yScale(d.kpg); })
+
+			    console.log(data);
+
+
+
+
+
+			    //filter to see only yankees data
+			    var nyData = data.filter(function(d) { return d.franchise === "NYY"; });
+
+			    			    var yScale = d3.scale.linear()
+			      //.domain([0, 10])
+			      .domain([0, d3.max(nyData, function(d) { return d.kpg; })])
+			      .range([height, 0]);				    
+
+				svg.selectAll(".dot")
+				      .data(nyData)
+				  .enter().append("circle")
+				      .attr("class", "dot")
+				      .attr("r", 2)
+				      .attr("cx", function(d, i) { return xScale(d.year); })
+				      .attr("cy", function(d) { return yScale(d.kpg); })
+
+			    console.log(nyData);
+
+
+
+
+
+			    var line = d3.svg.line()
+				    .x(function(d) { return xScale(d.year); })
+				    .y(function(d) { return yScale(d.kpg); });
+
+				svg.append("path")
+					.attr("class", "line")
+					.attr("d", line(nyData)); 
+				
+				svg.append("g")
+				  .attr("class", "axis")
+				  .attr("transform", "translate(0, " + height + ")")
+				  .call(xAxis)
+
+
+			});
+
+
+        </script>
+    </body>
+</html> 
